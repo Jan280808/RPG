@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Character/Character.iml" filepath="$PROJECT_DIR$/Character/Character.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Cluster/Cluster.iml" filepath="$PROJECT_DIR$/Cluster/Cluster.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Enemies/Enemies.iml" filepath="$PROJECT_DIR$/Enemies/Enemies.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Equipment/Equipment.iml" filepath="$PROJECT_DIR$/Equipment/Equipment.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RPG.iml" filepath="$PROJECT_DIR$/RPG.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Structure/Structure.iml" filepath="$PROJECT_DIR$/Structure/Structure.iml" />
+    </modules>
+  </component>
+</project>

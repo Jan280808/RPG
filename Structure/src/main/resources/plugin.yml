@@ -1,0 +1,5 @@
+name: Structure
+version: '${project.version}'
+main: org.example.structure.Structure
+api-version: 1.19
+authors: [ Jan2808 ]

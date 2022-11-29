@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Cluster">
+    <output-path>$USER_HOME$/Desktop/Localhost/plugins</output-path>
+    <root id="archive" name="Cluster.jar">
+      <element id="module-output" name="Cluster" />
+    </root>
+  </artifact>
+</component>

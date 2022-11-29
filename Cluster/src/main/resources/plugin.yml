@@ -1,0 +1,5 @@
+name: Cluster
+version: '${project.version}'
+main: org.example.cluster.Cluster
+api-version: 1.19
+authors: [ Jan2808 ]

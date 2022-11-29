@@ -1,0 +1,7 @@
+name: Character
+version: '${project.version}'
+main: org.example.character.Character
+api-version: 1.19
+authors: [ Jan2808 ]
+depend:
+  - Cluster

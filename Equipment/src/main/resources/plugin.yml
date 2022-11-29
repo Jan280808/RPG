@@ -1,0 +1,12 @@
+name: Equipment
+version: '${project.version}'
+main: org.example.equipment.Equipment
+api-version: 1.19
+authors: [ Jan2808 ]
+depend:
+  - Cluster
+
+commands:
+  weapon:
+    description: open gui with all weapon
+

@@ -1,0 +1,8 @@
+name: Enemies
+version: '${project.version}'
+main: org.example.enemies.Enemies
+api-version: 1.19
+authors: [ Jan2808 ]
+depend:
+  - Cluster
+  - Equipment

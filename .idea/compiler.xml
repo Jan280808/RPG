@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="Cluster" />
+        <module name="Enemies" />
+        <module name="Character" />
+        <module name="Equipment" />
+        <module name="Structure" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="Character" target="1.8" />
+      <module name="Cluster" target="1.8" />
+      <module name="Enemies" target="16" />
+      <module name="Equipment" target="16" />
+      <module name="Structure" target="1.8" />
+      <module name="Weapon" target="16" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

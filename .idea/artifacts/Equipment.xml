@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Equipment">
+    <output-path>$USER_HOME$/Desktop/Localhost/plugins</output-path>
+    <root id="archive" name="Equipment.jar">
+      <element id="module-output" name="Equipment" />
+    </root>
+  </artifact>
+</component>
