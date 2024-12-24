@@ -1,0 +1,10 @@
+de\jan\rpg\core\command\CoreCommand.class
+de\jan\rpg\core\event\PlayerConnectionEvent.class
+de\jan\rpg\core\command\CoreCommands.class
+de\jan\rpg\core\database\DataBase.class
+de\jan\rpg\core\player\CorePlayerManager.class
+de\jan\rpg\core\command\sub\PlayerCommand.class
+de\jan\rpg\core\APIImpl.class
+de\jan\rpg\core\command\sub\SubCommands.class
+de\jan\rpg\core\Core.class
+de\jan\rpg\core\player\CorePlayer.class

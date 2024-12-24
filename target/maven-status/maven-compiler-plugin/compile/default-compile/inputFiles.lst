@@ -1,0 +1,10 @@
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\APIImpl.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\command\CoreCommand.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\command\CoreCommands.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\command\sub\PlayerCommand.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\command\sub\SubCommands.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\Core.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\database\DataBase.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\event\PlayerConnectionEvent.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\player\CorePlayer.java
+C:\Users\Jan\IdeaProjects\RPG\Core\src\main\java\de\jan\rpg\core\player\CorePlayerManager.java
