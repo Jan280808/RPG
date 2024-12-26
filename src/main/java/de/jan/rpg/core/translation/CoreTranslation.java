@@ -92,6 +92,8 @@ public class CoreTranslation implements Translation {
         } catch (Exception exception) {
             Core.LOGGER.error("could not load translation.json", exception);
         }
+        Core.LOGGER.info("The following translations were loaded");
+        translationMap.forEach((language, stringComponentMap) -> Core.LOGGER.info("Language: {}, size: {}", language.name(), stringComponentMap.size()));
         isLoading = false;
     }
 
