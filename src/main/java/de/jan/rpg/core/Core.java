@@ -1,7 +1,7 @@
 package de.jan.rpg.core;
 
 import de.jan.rpg.core.command.CoreCommand;
-import de.jan.rpg.core.database.DataBase;
+import de.jan.rpg.core.database.CoreDataBase;
 import de.jan.rpg.core.event.PlayerConnectionEvent;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -18,27 +18,30 @@ public final class Core extends JavaPlugin {
     public static final Logger LOGGER = LoggerFactory.getLogger("Core");
     public static Core instance;
 
+    public static boolean offlineMode;
+
     private APIImpl coreAPI;
-    private DataBase dataBase;
+    private CoreDataBase coreDataBase;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
-        double start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         instance = this;
-        coreAPI = new APIImpl();
-        dataBase = new DataBase();
-
+        coreDataBase = new CoreDataBase();
+        coreAPI = new APIImpl(this);
+        coreAPI.getCorePlayerManager().loadAllCorePlayer();
         registerListener(Bukkit.getPluginManager());
         registerCommands();
-        double requiredTime = System.currentTimeMillis() - start;
+        long requiredTime = System.currentTimeMillis() - start;
         LOGGER.info("Core has been successfully loaded in {}ms", requiredTime);
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        dataBase.disconnect();
+        coreDataBase.refresh(coreAPI.getCorePlayerManager());
+        coreDataBase.disconnect();
     }
 
     private void registerListener(PluginManager pluginManager) {
