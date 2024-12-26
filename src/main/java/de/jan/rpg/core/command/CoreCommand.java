@@ -46,6 +46,10 @@ public class CoreCommand implements TabExecutor {
         Player player = (Player) sender;
         if(!player.hasPermission("")) return null;
         if(args.length == 1) return subCommandMap.keySet().stream().toList();
+        if(args.length == 2) {
+            CoreCommands coreCommand = subCommandMap.get(args[0]);
+            if(coreCommand.subCommands() != null) return coreCommand.subCommands();
+        }
         return List.of();
     }
 
