@@ -5,7 +5,11 @@ import lombok.Getter;
 
 @Getter
 public enum SubCommands {
-    PLAYER(new PlayerCommand(), "player");
+    PLAYER(new PlayerCommand(), "player"),
+    REFRESH(new RefreshCommand(), "refresh"),
+    COINS(new CoinCommand(), "coins"),
+    LANGUAGE(new LanguageCommand(), "language"),
+    TRANSLATION(new TranslationCommand(), "translation");
 
     private final CoreCommands commands;
     private final String subCommand;
