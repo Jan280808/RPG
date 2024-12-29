@@ -3,6 +3,7 @@ package de.jan.rpg.core.database;
 import de.jan.rpg.api.dataBase.DataBase;
 import de.jan.rpg.core.Core;
 import de.jan.rpg.core.player.CorePlayerManager;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.*;
 
+@Getter
 public class CoreDataBase implements DataBase {
 
     private Connection connection;
@@ -20,7 +22,7 @@ public class CoreDataBase implements DataBase {
 
     public CoreDataBase() {
         handelOnlineMode();
-        createTable("corePlayer", "uuid VARCHAR(100), language VARCHAR(100), firstJoin VARCHAR(100), totalJoin INT");
+        createTable("corePlayer", "uuid VARCHAR(100), language VARCHAR(100), firstJoinDate VARCHAR(100), totalJoin INT, coins INT, level INT, xp INT");
     }
 
     @Override
@@ -104,7 +106,8 @@ public class CoreDataBase implements DataBase {
     public void refresh(CorePlayerManager corePlayerManager) {
         if(!isConnected) return;
         StringBuilder updateQuery = new StringBuilder("UPDATE corePlayer SET ");
-        corePlayerManager.getPlayerMap().forEach((uuid, corePlayer) -> updateQuery.append("totalJoin = ").append(corePlayer.getTotalJoin()).append(", coins = ").append(corePlayer.getCoins()).append(" WHERE uuid = '").append(corePlayer.getUUID()).append("'; "));
+        if(corePlayerManager.getPlayerMap().isEmpty()) return;
+        corePlayerManager.getPlayerMap().forEach((uuid, corePlayer) -> updateQuery.append("xp = ").append(corePlayer.getXP()).append(", level = ").append(corePlayer.getLevel()).append(", totalJoin = ").append(corePlayer.getTotalJoin()).append(", coins = ").append(corePlayer.getCoins()).append(" WHERE uuid = '").append(corePlayer.getUUID()).append("'; "));
         executeUpdate(updateQuery.toString());
     }
 
@@ -122,9 +125,8 @@ public class CoreDataBase implements DataBase {
 
     private void connect(String host, int port, String database, String user, String password) {
         if(isConnected) return;
-
         try {
-            this.connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database, user, password);
+            this.connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=false", user, password);
             Core.LOGGER.info("connection to {}:{} was successful", host, port);
             isConnected = true;
         } catch (SQLException exception) {
