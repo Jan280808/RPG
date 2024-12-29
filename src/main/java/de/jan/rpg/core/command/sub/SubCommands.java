@@ -9,7 +9,10 @@ public enum SubCommands {
     REFRESH(new RefreshCommand(), "refresh"),
     COINS(new CoinCommand(), "coins"),
     LANGUAGE(new LanguageCommand(), "language"),
-    TRANSLATION(new TranslationCommand(), "translation");
+    TRANSLATION(new TranslationCommand(), "translation"),
+    DEATH(new DeathCommand(), "death"),
+    ENEMY(new EnemyCommand(), "enemy"),
+    PARTICLE(new ParticleCommand(), "particle");
 
     private final CoreCommands commands;
     private final String subCommand;
