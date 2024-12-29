@@ -4,6 +4,7 @@ import de.jan.rpg.api.component.ComponentSerializer;
 import de.jan.rpg.api.translation.Language;
 import de.jan.rpg.api.translation.Translation;
 import de.jan.rpg.core.Core;
+import lombok.Getter;
 import lombok.Synchronized;
 import net.kyori.adventure.text.Component;
 import org.json.JSONObject;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+@Getter
 public class CoreTranslation implements Translation {
 
     private boolean isLoading = false;
@@ -48,6 +50,7 @@ public class CoreTranslation implements Translation {
 
     @Synchronized
     public void loadTranslationCache() {
+        if(isLoading) return;
         isLoading = true;
         String filePath = "./plugins/core/translation.json";
         try {
@@ -74,44 +77,58 @@ public class CoreTranslation implements Translation {
                 Iterator<String> keys = language.keys();
 
                 while(keys.hasNext()) {
-                    String key = keys.next();
-                    JSONObject subLanguage = language.getJSONObject(key);
+                    String languageKey = keys.next();
+                    JSONObject subLanguage = language.getJSONObject(languageKey);
                     Map<String, Component> translations = new HashMap<>();
 
-                    Iterator<String> subKeys = subLanguage.keys();
+                    flattenJSON(subLanguage, "", translations);
 
-                    while(subKeys.hasNext()) {
-                        String subKey = subKeys.next();
-                        Component value = ComponentSerializer.deserialize(subLanguage.getString(subKey));
-                        translations.put(subKey, value);
-                    }
-                    translationMap.put(Language.fromString(key), translations);
+                    translationMap.put(Language.fromString(languageKey), translations);
                 }
             }
 
         } catch (Exception exception) {
             Core.LOGGER.error("could not load translation.json", exception);
         }
-        Core.LOGGER.info("The following translations were loaded");
-        translationMap.forEach((language, stringComponentMap) -> Core.LOGGER.info("Language: {}, size: {}", language.name(), stringComponentMap.size()));
         isLoading = false;
     }
 
     private void updateJSONWithNewTranslation(String key, String defaultValue) throws Exception {
         String filePath = "./plugins/core/translation.json";
-
         String content = new String(Files.readAllBytes(Paths.get(filePath)));
-        JSONObject jsonObject = new JSONObject(content);
 
+        JSONObject jsonObject = new JSONObject(content);
         JSONObject languageObject = jsonObject.getJSONObject("language");
 
         for(String langKey : languageObject.keySet()) {
             JSONObject langObject = languageObject.getJSONObject(langKey);
-            if(!langObject.has(key)) langObject.put(key, defaultValue);
+            addNestedKey(langObject, key.split("\\."), defaultValue);
         }
 
-        try (FileWriter writer = new FileWriter(filePath)) {
+        try(FileWriter writer = new FileWriter(filePath)) {
             writer.write(jsonObject.toString(4));
+        }
+    }
+
+    private void addNestedKey(JSONObject jsonObject, String[] keys, String value) {
+        JSONObject current = jsonObject;
+
+        for(int i = 0; i < keys.length - 1; i++) {
+            String key = keys[i];
+            if(!current.has(key)) current.put(key, new JSONObject());
+            current = current.getJSONObject(key);
+        }
+
+        String lastKey = keys[keys.length - 1];
+        if(!current.has(lastKey)) current.put(lastKey, value);
+    }
+
+    private void flattenJSON(JSONObject jsonObject, String parentKey, Map<String, Component> translations) {
+        for(String key : jsonObject.keySet()) {
+            Object value = jsonObject.get(key);
+            String fullKey = parentKey.isEmpty() ? key : parentKey + "." + key;
+            if(value instanceof JSONObject) flattenJSON((JSONObject) value, fullKey, translations);
+            else if(value instanceof String) translations.put(fullKey, ComponentSerializer.deserialize((String) value));
         }
     }
 }
