@@ -2,7 +2,7 @@ package de.jan.rpg.core;
 
 import de.jan.rpg.core.command.CoreCommand;
 import de.jan.rpg.core.database.CoreDataBase;
-import de.jan.rpg.core.event.PlayerConnectionEvent;
+import de.jan.rpg.core.event.*;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
@@ -42,10 +42,15 @@ public final class Core extends JavaPlugin {
         // Plugin shutdown logic
         coreDataBase.refresh(coreAPI.getCorePlayerManager());
         coreDataBase.disconnect();
+        coreAPI.getCoreEntityManager().getEntityMap().forEach((entity, coreHostile) -> coreHostile.getEntity().remove());
     }
 
     private void registerListener(PluginManager pluginManager) {
         pluginManager.registerEvents(new PlayerConnectionEvent(coreAPI), this);
+        pluginManager.registerEvents(new PlayerDamageEvent(coreAPI), this);
+        pluginManager.registerEvents(new PlayerDeathEvent(coreAPI), this);
+        pluginManager.registerEvents(new HostileDamageEvent(coreAPI), this);
+        pluginManager.registerEvents(new CanceledEvent(), this);
     }
 
     private void registerCommands() {
