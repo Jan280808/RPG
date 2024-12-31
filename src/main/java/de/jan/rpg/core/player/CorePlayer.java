@@ -27,7 +27,7 @@ public class CorePlayer implements RPGPlayer {
 
     private Language language;
     private int totalJoin;
-    private int coins;
+    private int souls;
 
     private int level;
     private int xp;
@@ -38,12 +38,12 @@ public class CorePlayer implements RPGPlayer {
     private boolean canDeath = true;
     private boolean canTakeDamage = true;
 
-    public CorePlayer(@NotNull UUID uuid, @NotNull Language language, String firstJoinDate, int totalJoin, int coins, int level, int xp) {
+    public CorePlayer(@NotNull UUID uuid, @NotNull Language language, String firstJoinDate, int totalJoin, int souls, int level, int xp) {
         this.uuid = uuid;
         this.language = language;
         this.firstJoinDate = firstJoinDate;
         this.totalJoin = totalJoin;
-        this.coins = coins;
+        this.souls = souls;
         this.currentLife = maxLife;
         this.level = level;
         this.xp = xp;
@@ -77,35 +77,32 @@ public class CorePlayer implements RPGPlayer {
     }
 
     @Override
-    public void addCoins(int amount) {
-        if(Core.offlineMode) throw new OfflineException();
-        coins = coins + amount;
+    public void addSouls(int amount) {
+        setSouls(souls + amount);
     }
 
     @Override
-    public void setCoins(int amount) {
+    public void setSouls(int amount) {
         if(Core.offlineMode) throw new OfflineException();
         if(isNegative(amount)) throw new ValueIsNegativeException("coins", amount);
-        coins = amount;
+        souls = amount;
     }
 
     @Override
-    public boolean removeCoins(int amount) {
-        if(Core.offlineMode) throw new OfflineException();
-        if(isNegative(amount)) throw new ValueIsNegativeException("coins", amount);
-        coins = coins - amount;
+    public boolean removeSouls(int amount) {
+        setSouls(souls - amount);
         return true;
     }
 
     @Override
-    public int getCoins() {
+    public int getSouls() {
         if(Core.offlineMode) throw new OfflineException();
-        return coins;
+        return souls;
     }
 
     @Override
-    public boolean hasEnoughCoins(int amount) {
-        return coins >= amount;
+    public boolean hasEnoughSouls(int amount) {
+        return souls >= amount;
     }
 
     @Override

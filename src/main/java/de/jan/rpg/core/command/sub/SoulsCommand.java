@@ -7,13 +7,13 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public class CoinCommand implements CoreCommands {
+public class SoulsCommand implements CoreCommands {
 
     @Override
     public void onCommand(APIImpl api, Player player, String[] args) {
         CorePlayer corePlayer = api.getCorePlayerManager().getCorePlayer(player.getUniqueId());
-        corePlayer.addCoins(500);
-        player.sendMessage("currentCoins: " + corePlayer.getCoins());
+        corePlayer.addSouls(500);
+        player.sendMessage("currentCoins: " + corePlayer.getSouls());
     }
 
     @Override
