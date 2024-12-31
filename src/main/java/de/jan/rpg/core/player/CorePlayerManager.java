@@ -1,5 +1,7 @@
 package de.jan.rpg.core.player;
 
+import de.jan.rpg.api.exception.CorePlayerNotRegisteredException;
+import de.jan.rpg.api.player.PlayerManager;
 import de.jan.rpg.api.translation.Language;
 import de.jan.rpg.api.player.RPGPlayer;
 import de.jan.rpg.core.Core;
@@ -7,16 +9,14 @@ import de.jan.rpg.core.database.CoreDataBase;
 import lombok.Getter;
 import lombok.Synchronized;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
-public class CorePlayerManager implements de.jan.rpg.api.player.PlayerManager {
+public class CorePlayerManager implements PlayerManager {
 
     private final Map<UUID, CorePlayer> playerMap;
     private final CoreDataBase dataBase;
@@ -24,21 +24,20 @@ public class CorePlayerManager implements de.jan.rpg.api.player.PlayerManager {
     public CorePlayerManager(CoreDataBase dataBase) {
         this.dataBase = dataBase;
         this.playerMap =  new HashMap<>();
+        dataBase.createTable("corePlayer", "uuid VARCHAR(100), language VARCHAR(100), firstJoinDate VARCHAR(100), totalJoin INT, souls INT, level INT, xp INT");
         runTask();
+        loadPlayerWhoHasBeenStayAfterReloadTheServer();
     }
 
-    public CorePlayer getCorePlayer(UUID uuid) {
-        if(isRegistered(uuid)) return playerMap.get(uuid);
-        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        CorePlayer corePlayer = new CorePlayer(uuid, Language.ENGLISH, date, 1, 1000, 0, 0);
-        register(corePlayer);
-        playerMap.put(uuid, corePlayer);
-        return corePlayer;
+    //deleteMe
+    private void loadPlayerWhoHasBeenStayAfterReloadTheServer() {
+        Bukkit.getOnlinePlayers().forEach(player -> getCorePlayer(player.getUniqueId()));
     }
 
     @Override
     public RPGPlayer getRPGPlayer(UUID uuid) {
-        return getCorePlayer(uuid);
+        if(isRegistered(uuid)) return playerMap.get(uuid);
+        return loadCorePlayer(uuid);
     }
 
     @Override
@@ -46,9 +45,44 @@ public class CorePlayerManager implements de.jan.rpg.api.player.PlayerManager {
         return playerMap.containsKey(uuid);
     }
 
-    private void register(CorePlayer corePlayer) {
-        String columns = "uuid, language, firstJoinDate, totalJoin, coins, level, xp";
-        dataBase.insertData("corePlayer", columns, corePlayer.getUUID(), corePlayer.getLanguage(), corePlayer.getFirstJoinDate(), corePlayer.getTotalJoin(), corePlayer.getCoins(), 0, 0);
+    public CorePlayer getCorePlayer(UUID uuid) {
+        if(isRegistered(uuid)) return playerMap.get(uuid);
+        CorePlayer corePlayer = loadCorePlayer(uuid);
+        if(corePlayer != null) return corePlayer;
+        return registerCorePlayer(uuid);
+    }
+
+    private CorePlayer loadCorePlayer(UUID uuid) {
+        if(playerMap.containsKey(uuid)) return playerMap.get(uuid);
+        if(Core.offlineMode) return null;
+        Map<String, Object> result = dataBase.selectDataFromUUID("corePlayer", "language, firstJoinDate, totalJoin, souls, level, xp", uuid);
+
+        if(result == null || result.isEmpty()) return null;
+
+        String languageString = (String) result.get("language");
+        Language language = Language.valueOf(languageString.toUpperCase());
+        String firstJoinDate = (String) result.get("firstJoinDate");
+        int totalJoin = (int) result.get("totalJoin");
+        int souls = (int) result.get("souls");
+        int level = (int) result.get("level");
+        int xp = (int) result.get("xp");
+        CorePlayer corePlayer = new CorePlayer(uuid, language, firstJoinDate, totalJoin, souls, level, xp);
+        playerMap.put(uuid, corePlayer);
+        return corePlayer;
+    }
+
+    private CorePlayer registerCorePlayer(UUID uuid) {
+        CorePlayer corePlayer = new CorePlayer(uuid, Language.ENGLISH, LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")), 1, 1000, 0, 0);
+        playerMap.put(corePlayer.getUUID(), corePlayer);
+        dataBase.insertData("corePlayer", "uuid, language, firstJoinDate, totalJoin, souls, level, xp", corePlayer.getUUID(), corePlayer.getLanguage(), corePlayer.getFirstJoinDate(), corePlayer.getTotalJoin(), corePlayer.getSouls(), 0, 0);
+        return corePlayer;
+    }
+
+    public void safeCorePlayer(Player player) {
+        UUID uuid = player.getUniqueId();
+        if(!isRegistered(uuid)) throw new CorePlayerNotRegisteredException(player.getName());
+        CorePlayer corePlayer = playerMap.get(uuid);
+        dataBase.updateDataFromUUID("corePlayer", corePlayer.getUUID(),"language, totalJoin, souls, level, xp", corePlayer.getLanguage().name(), corePlayer.getTotalJoin(), corePlayer.getSouls(), corePlayer.getLevel(), corePlayer.getXP());
     }
 
     //maybe too much cache?
@@ -56,20 +90,19 @@ public class CorePlayerManager implements de.jan.rpg.api.player.PlayerManager {
     public void loadAllCorePlayer() {
         if(Core.offlineMode) return;
 
-        Object result = dataBase.selectData("corePlayer","uuid, language, firstJoinDate, totalJoin, coins, level, xp");
+        Object result = dataBase.selectData("corePlayer","uuid, language, firstJoinDate, totalJoin, souls, level, xp");
         if(result instanceof List<?>) {
             List<Map<String, Object>> rows = (List<Map<String, Object>>) result;
-
             for(Map<String, Object> row : rows) {
                 UUID uuid = UUID.fromString((String) row.get("uuid"));
                 String languageString = (String) row.get("language");
                 Language language = Language.valueOf(languageString.toUpperCase());
                 String firstJoinDate = (String) row.get("firstJoinDate");
                 int totalJoin = (int) row.get("totalJoin");
-                int coins = (int) row.get("coins");
+                int souls = (int) row.get("souls");
                 int level = (int) row.get("level");
                 int xp = (int) row.get("xp");
-                playerMap.put(uuid, new CorePlayer(uuid, language, firstJoinDate, totalJoin, coins, level, xp));
+                playerMap.put(uuid, new CorePlayer(uuid, language, firstJoinDate, totalJoin, souls, level, xp));
             }
             Core.LOGGER.info("Total loaded corePlayer: {}", playerMap.size());
         } else {
@@ -77,16 +110,11 @@ public class CorePlayerManager implements de.jan.rpg.api.player.PlayerManager {
         }
     }
 
+    //run actionbar
     private void runTask() {
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(Core.instance, () -> {
+        Bukkit.getScheduler().runTaskTimerAsynchronously(Core.instance, () -> {
             if(playerMap.isEmpty()) return;
-            playerMap.forEach((uuid, corePlayer) -> {
-                if(corePlayer.getPlayer() != null) {
-                    if(corePlayer.getPlayer().isOnline()) {
-                        corePlayer.sendActionbar();
-                    }
-                }
-            });
+            playerMap.values().stream().filter(corePlayer -> corePlayer.getPlayer() != null && corePlayer.getPlayer().isOnline()).forEach(CorePlayer::sendActionbar);
         }, 0, 20);
     }
 }
