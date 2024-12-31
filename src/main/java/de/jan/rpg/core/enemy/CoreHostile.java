@@ -111,7 +111,7 @@ public class CoreHostile implements RPGLivingEntity {
 
         if(value >= currentLife) {
             setCurrentLife(0);
-            death();
+            deathByPlayer(rpgPlayer);
             return;
         }
         setCurrentLife(currentLife-value);
@@ -175,7 +175,7 @@ public class CoreHostile implements RPGLivingEntity {
         TextDisplay textDisplay = (TextDisplay) location.getWorld().spawnEntity(location.clone().add(0, 1, 0), EntityType.TEXT_DISPLAY);
 
         Component text = ComponentSerializer.deserialize("<red>" + damage);
-        if(damager != null) text = text.append(ComponentSerializer.deserialize(" <gray>[" + damager.getPlayer().getName() + "]"));
+        //if(damager != null) text = text.append(ComponentSerializer.deserialize(" <gray>[" + damager.getPlayer().getName() + "]"));
         textDisplay.customName(text);
 
         textDisplay.setBillboard(TextDisplay.Billboard.CENTER);
@@ -186,7 +186,7 @@ public class CoreHostile implements RPGLivingEntity {
         new BukkitRunnable() {
             int ticks = 0;
             final double movementStep = 0.02;
-            final int lifetimeTicks = 30;
+            final int lifetimeTicks = 20;
 
             @Override
             public void run() {
