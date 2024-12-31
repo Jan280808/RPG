@@ -1,7 +1,6 @@
 package de.jan.rpg.core;
 
 import de.jan.rpg.core.command.CoreCommand;
-import de.jan.rpg.core.command.TestCommand;
 import de.jan.rpg.core.database.CoreDataBase;
 import de.jan.rpg.core.event.*;
 import lombok.Getter;
@@ -54,6 +53,5 @@ public final class Core extends JavaPlugin {
 
     private void registerCommands() {
         Objects.requireNonNull(getCommand("core")).setExecutor(new CoreCommand(coreAPI));
-        Objects.requireNonNull(getCommand("test")).setExecutor(new TestCommand(coreAPI));
     }
 }
