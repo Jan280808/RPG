@@ -2,7 +2,6 @@ package de.jan.rpg.core.database;
 
 import de.jan.rpg.api.dataBase.DataBase;
 import de.jan.rpg.core.Core;
-import de.jan.rpg.core.player.CorePlayerManager;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
@@ -22,7 +21,6 @@ public class CoreDataBase implements DataBase {
 
     public CoreDataBase() {
         handelOnlineMode();
-        createTable("corePlayer", "uuid VARCHAR(100), language VARCHAR(100), firstJoinDate VARCHAR(100), totalJoin INT, coins INT, level INT, xp INT");
     }
 
     @Override
@@ -44,8 +42,21 @@ public class CoreDataBase implements DataBase {
     }
 
     @Override
-    public void updateData(@NotNull String tableName, @NotNull String setClause, @NotNull String condition) {
-        executeUpdate("UPDATE " + tableName + " SET " + setClause + " WHERE " + condition);
+    public void updateData(@NotNull String tableName, @NotNull String columns, @NotNull Object... values) {
+
+    }
+
+    @Override
+    public void updateDataFromUUID(@NotNull String tableName, @NotNull UUID uuid, @NotNull String columns, @NotNull Object... values) {
+        if(tableName.isEmpty() || columns.isEmpty() || values.length == 0) throw new IllegalArgumentException("Table name, columns, and values must not be empty");
+        String[] columnNames = columns.split(",");
+        if(columnNames.length != values.length) throw new IllegalArgumentException("Number of columns must match number of values");
+        String placeholders = String.join(" = ?, ", columnNames) + " = ?";
+        String query = "UPDATE " + tableName + " SET " + placeholders + " WHERE uuid = ?";
+        Object[] allValues = new Object[values.length + 1];
+        System.arraycopy(values, 0, allValues, 0, values.length);
+        allValues[values.length] = uuid.toString();
+        executeUpdate(query, allValues);
     }
 
     @Override
@@ -56,6 +67,11 @@ public class CoreDataBase implements DataBase {
     @Override
     public Object selectData(@NotNull String tableName, @NotNull String sql) {
         return executeQuery("SELECT " + sql + " FROM " + tableName);
+    }
+
+    @Override
+    public Map<String, Object> selectDataFromUUID(@NotNull String tableName, @NotNull String sql, @NotNull UUID uuid) {
+        return executeQueryWithUUID("SELECT " + sql + " FROM " + tableName + " WHERE uuid = ?", uuid);
     }
 
     private Object executeQuery(@NotNull String sql) {
@@ -102,24 +118,45 @@ public class CoreDataBase implements DataBase {
         }
     }
 
-    //refresh dataBase with all corePlayer (only call when server stop)
-    public void refresh(CorePlayerManager corePlayerManager) {
-        if(!isConnected) return;
-        StringBuilder updateQuery = new StringBuilder("UPDATE corePlayer SET ");
-        if(corePlayerManager.getPlayerMap().isEmpty()) return;
-        corePlayerManager.getPlayerMap().forEach((uuid, corePlayer) -> updateQuery.append("xp = ").append(corePlayer.getXP()).append(", level = ").append(corePlayer.getLevel()).append(", totalJoin = ").append(corePlayer.getTotalJoin()).append(", coins = ").append(corePlayer.getCoins()).append(" WHERE uuid = '").append(corePlayer.getUUID()).append("'; "));
-        executeUpdate(updateQuery.toString());
+    private Map<String, Object> executeQueryWithUUID(@NotNull String sql, @NotNull UUID uuid) {
+        if(!isConnected) return null;
+
+        try(PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, uuid.toString());
+            ResultSet resultSet = statement.executeQuery();
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            if(!resultSet.next()) {
+                Core.LOGGER.info("No data found for UUID: {}", uuid);
+                resultSet.close();
+                return null;
+            }
+
+            Map<String, Object> row = new HashMap<>();
+            for(int i = 1; i <= columnCount; i++) {
+                String columnName = metaData.getColumnName(i);
+                Object columnValue = resultSet.getObject(i);
+                row.put(columnName, columnValue);
+            }
+
+            resultSet.close();
+            return row;
+
+        } catch (SQLException e) {
+            Core.LOGGER.error("SQLException occurred while executing query", e);
+            return null;
+        }
     }
 
-    private void executeUpdate(String query) {
+    private void executeUpdate(String query, Object... values) {
         if(!isConnected) return;
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
+        try(PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            for(int i = 0; i < values.length; i++) preparedStatement.setObject(i + 1, values[i]);
             preparedStatement.executeUpdate();
-            preparedStatement.close();
-            Core.LOGGER.info("query call was successful");
+            Core.LOGGER.info("Query call was successful");
         } catch (SQLException exception) {
-            Core.LOGGER.info("query call has failed", exception);
+            Core.LOGGER.error("Query call has failed", exception);
         }
     }
 
