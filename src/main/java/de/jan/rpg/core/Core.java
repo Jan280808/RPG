@@ -1,6 +1,7 @@
 package de.jan.rpg.core;
 
 import de.jan.rpg.core.command.CoreCommand;
+import de.jan.rpg.core.command.TestCommand;
 import de.jan.rpg.core.database.CoreDataBase;
 import de.jan.rpg.core.event.*;
 import lombok.Getter;
@@ -30,7 +31,6 @@ public final class Core extends JavaPlugin {
         instance = this;
         coreDataBase = new CoreDataBase();
         coreAPI = new APIImpl(this);
-        coreAPI.getCorePlayerManager().loadAllCorePlayer();
         registerListener(Bukkit.getPluginManager());
         registerCommands();
         long requiredTime = System.currentTimeMillis() - start;
@@ -40,7 +40,6 @@ public final class Core extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        coreDataBase.refresh(coreAPI.getCorePlayerManager());
         coreDataBase.disconnect();
         coreAPI.getCoreEntityManager().getEntityMap().forEach((entity, coreHostile) -> coreHostile.getEntity().remove());
     }
@@ -55,5 +54,6 @@ public final class Core extends JavaPlugin {
 
     private void registerCommands() {
         Objects.requireNonNull(getCommand("core")).setExecutor(new CoreCommand(coreAPI));
+        Objects.requireNonNull(getCommand("test")).setExecutor(new TestCommand(coreAPI));
     }
 }
