@@ -12,7 +12,8 @@ public enum SubCommands {
     DEATH(new DeathCommand(), "death"),
     ENEMY(new EnemyCommand(), "enemy"),
     PARTICLE(new ParticleCommand(), "particle"),
-    ITEM(new ItemCommand(), "item");
+    ITEM(new ItemCommand(), "item"),
+    DUMMY(new DummyCommand(), "dummy");
 
     private final CoreCommands commands;
     private final String subCommand;
