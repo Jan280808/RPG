@@ -25,7 +25,7 @@ public class CoreDataBase implements DataBase {
 
     @Override
     public void createTable(@NotNull String tableName, @NotNull String tableValues) {
-        executeUpdate("CREATE TABLE IF NOT EXISTS " + tableName + " (" + tableValues + ")");
+        executeAsyncUpdate("CREATE TABLE IF NOT EXISTS " + tableName + " (" + tableValues + ")");
     }
 
     @Override
@@ -38,7 +38,7 @@ public class CoreDataBase implements DataBase {
 
         if(formattedValues.length() > 0) formattedValues.setLength(formattedValues.length() - 2);
         String query = "INSERT INTO " + tableName + " (" + columns + ") VALUES (" + formattedValues + ")";
-        executeUpdate(query);
+        executeAsyncUpdate(query);
     }
 
     @Override
@@ -56,12 +56,12 @@ public class CoreDataBase implements DataBase {
         Object[] allValues = new Object[values.length + 1];
         System.arraycopy(values, 0, allValues, 0, values.length);
         allValues[values.length] = uuid.toString();
-        executeUpdate(query, allValues);
+        executeAsyncUpdate(query, allValues);
     }
 
     @Override
     public void removeData(@NotNull String tableName, @NotNull String condition) {
-        executeUpdate("DELETE FROM " + tableName + " WHERE " + condition);
+        executeAsyncUpdate("DELETE FROM " + tableName + " WHERE " + condition);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class CoreDataBase implements DataBase {
         }
     }
 
-    private void executeUpdate(String query, Object... values) {
+    private void executeAsyncUpdate(String query, Object... values) {
         if(!isConnected) return;
         try(PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             for(int i = 0; i < values.length; i++) preparedStatement.setObject(i + 1, values[i]);
