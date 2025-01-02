@@ -40,6 +40,8 @@ public final class Core extends JavaPlugin {
     public void onDisable() {
         // Plugin shutdown logic
         coreDataBase.disconnect();
+
+        //remove all coreHostileEntities
         coreAPI.getCoreEntityManager().getEntityMap().forEach((entity, coreHostile) -> coreHostile.getEntity().remove());
     }
 

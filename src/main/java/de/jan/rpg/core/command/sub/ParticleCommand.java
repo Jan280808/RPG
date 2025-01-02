@@ -1,17 +1,11 @@
 package de.jan.rpg.core.command.sub;
 
 import de.jan.rpg.core.APIImpl;
-import de.jan.rpg.core.Core;
 import de.jan.rpg.core.command.CoreCommands;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Vibration;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
-
-import java.util.Arrays;
 import java.util.List;
 
 public class ParticleCommand implements CoreCommands {
