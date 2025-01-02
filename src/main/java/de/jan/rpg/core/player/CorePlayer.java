@@ -1,16 +1,28 @@
 package de.jan.rpg.core.player;
 
 import de.jan.rpg.api.component.ComponentSerializer;
+import de.jan.rpg.api.entity.DamageReason;
+import de.jan.rpg.api.entity.DeathReason;
+import de.jan.rpg.api.entity.RPGEntityType;
+import de.jan.rpg.api.entity.RPGLivingEntity;
+import de.jan.rpg.api.event.RPGPlayerDamageByHostileEvent;
+import de.jan.rpg.api.event.RPGPlayerDamageByPlayerEvent;
+import de.jan.rpg.api.event.RPGPlayerDamageEvent;
 import de.jan.rpg.api.event.RPGPlayerDeathEvent;
 import de.jan.rpg.api.exception.OfflineException;
 import de.jan.rpg.api.exception.ValueIsNegativeException;
 import de.jan.rpg.api.translation.Language;
-import de.jan.rpg.api.player.RPGPlayer;
+import de.jan.rpg.api.entity.player.RPGPlayer;
 import de.jan.rpg.core.Core;
+import de.jan.rpg.core.enemy.CoreHostile;
+import de.jan.rpg.core.item.combat.CoreWeapon;
 import lombok.Getter;
+import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.*;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -25,18 +37,22 @@ public class CorePlayer implements RPGPlayer {
     private final UUID uuid;
     private final String firstJoinDate;
 
+    @Setter
+    private boolean isLoaded = false;
+
     private Language language;
     private int totalJoin;
     private int souls;
 
     private int level;
     private int xp;
-    private int maxLife = 20;
+    private int maxLife = 100;
     private int currentLife;
     private int armor = 0;
     private boolean isDeath = false;
     private boolean canDeath = true;
     private boolean canTakeDamage = true;
+    private RPGLivingEntity lastDamager;
 
     public CorePlayer(@NotNull UUID uuid, @NotNull Language language, String firstJoinDate, int totalJoin, int souls, int level, int xp) {
         this.uuid = uuid;
@@ -143,24 +159,64 @@ public class CorePlayer implements RPGPlayer {
     }
 
     @Override
-    public Entity getEntity() {
-        if(getPlayer() == null) return null;
-        return getPlayer();
+    public Location getLocation() {
+        return getPlayer().getLocation();
     }
 
     @Override
-    public int level() {
-        return 0;
+    public RPGEntityType getRPGEntityType() {
+        return RPGEntityType.RPG_PLAYER;
     }
 
     @Override
-    public boolean canTakeDamage() {
-        return canTakeDamage;
+    public void setMaxLife(int value) {
+        maxLife = value;
+        sendActionbar();
     }
 
     @Override
-    public void canTakeDamage(Boolean aBoolean) {
-        canTakeDamage = aBoolean;
+    public void addMaxLife(int value) {
+        setMaxLife(maxLife + value);
+    }
+
+    @Override
+    public int getCurrentLife() {
+        return currentLife;
+    }
+
+    @Override
+    public void setCurrentLife(int value) {
+        if(value < 0) throw new IllegalArgumentException("");
+        currentLife = value;
+        getPlayer().setHealth(calculateHealth(getPlayer()));
+        sendActionbar();
+    }
+
+    @Override
+    public void addCurrentLife(int value) {
+       setCurrentLife(currentLife + value);
+    }
+
+    private double calculateHealth(Player player) {
+        double ratio = (double) currentLife / maxLife; // Verhältnis von currentLife zu maxLife
+        double maxHealth = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue(); // Standard: 20
+        return ratio * maxHealth; // Verhältnis der maximalen Leben
+    }
+
+    @Override
+    public int getArmor() {
+        return armor;
+    }
+
+    @Override
+    public void setArmor(int value) {
+        armor = value;
+        sendActionbar();
+    }
+
+    @Override
+    public void addArmor(int value) {
+        setArmor(armor + value);
     }
 
     @Override
@@ -179,96 +235,72 @@ public class CorePlayer implements RPGPlayer {
     }
 
     @Override
-    public void setMaxLife(int value) {
-        maxLife = value;
-        sendActionbar();
-    }
-
-    @Override
-    public int getCurrentLife() {
-        return currentLife;
-    }
-
-    @Override
-    public void setCurrentLife(int value) {
-        currentLife = value;
-        sendActionbar();
-    }
-
-    @Override
-    public void addCurrentLife(int value) {
-        currentLife = currentLife + value;
-        sendActionbar();
-    }
-
-    @Override
-    public void damage(int value, RPGPlayer damager) {
-        if(!canTakeDamage) return;
-
-        if(value >= currentLife) {
-            Bukkit.getPluginManager().callEvent(new RPGPlayerDeathEvent(this));
-            currentLife = 0;
-            sendActionbar();
-            death();
-            return;
-        }
-        currentLife -= value;
-        sendActionbar();
-
-        //invisible time
-        canTakeDamage = false;
-        Bukkit.getScheduler().scheduleSyncDelayedTask(Core.instance, () -> canTakeDamage = true, 10);
-    }
-
-    @Override
-    public void deathByPlayer(@NotNull RPGPlayer killer) {
-
-    }
-
-    @Override
-    public void death() {
-        if(isDeath) return;
-        currentLife = 0;
+    public void death(@NotNull DeathReason deathReason) {
+        if(isDeath || !canDeath) return;
         isDeath = true;
+        setCurrentLife(0);
         canTakeDamage = false;
         removeTargetStateFromHostileEntities();
         runDeathAnimation();
+        Bukkit.getPluginManager().callEvent(new RPGPlayerDeathEvent(this, deathReason));
     }
 
     @Override
-    public int getArmor() {
-        return armor;
+    public boolean canTakeDamage() {
+        return canTakeDamage;
     }
 
     @Override
-    public void setArmor(int value) {
-        armor = value;
-        sendActionbar();
+    public void canTakeDamage(Boolean aBoolean) {
+        canTakeDamage = aBoolean;
     }
 
     @Override
-    public void addArmor(int value) {
-        armor = value;
-        sendActionbar();
-    }
-
-    @Override
-    public void removeArmor(int value) {
-        if(value >= armor) {
-            armor = 0;
+    public void damage(int value, @NotNull DamageReason damageReason) {
+        Bukkit.getPluginManager().callEvent(new RPGPlayerDamageEvent(this, value, damageReason));
+        if(value >= currentLife) {
+            death(DeathReason.NO_LIFE);
             return;
         }
-        armor -= value;
+        setCurrentLife(currentLife - value);
+        setInvulnerable(10);
+    }
+
+    @Override
+    public RPGLivingEntity getLastDamager() {
+        return lastDamager;
+    }
+
+    public void damageByHostile(@NotNull CoreHostile damager) {
+        if(!canTakeDamage) return;
+        lastDamager = damager;
+        int damage = damager.getTotalDamage();
+        sendMessage("damage: " + damage);
+        damage(damage, DamageReason.HOSTILE_HIT);
+        Bukkit.getPluginManager().callEvent(new RPGPlayerDamageByHostileEvent(this, damager, damage));
+    }
+
+    public void damageByRPGPlayer(@NotNull CorePlayer damager, @NotNull CoreWeapon weapon) {
+        if(!canTakeDamage) return;
+        lastDamager = damager;
+        int damage = weapon.getDamage();
+        damage(damage, DamageReason.PLAYER_HIT);
+        Bukkit.getPluginManager().callEvent(new RPGPlayerDamageByPlayerEvent(this, damager, damage));
+    }
+
+    private void setInvulnerable(int delayInTicks) {
+        canTakeDamage = false;
+        Bukkit.getScheduler().runTaskLaterAsynchronously(Core.instance, () -> canTakeDamage = true, delayInTicks);
     }
 
     public void sendActionbar() {
         if(getPlayer() == null) return;
-        getPlayer().sendActionBar(ComponentSerializer.deserialize("<red>" + currentLife + "/" + maxLife + "❤ <dark_gray>- <gray>" + armor + "\uD83D\uDEE1"));
+        getPlayer().sendActionBar(ComponentSerializer.deserialize("<red>" + currentLife + "/" + maxLife + "❤ \n <dark_gray>- <gray>" + armor + "\uD83D\uDEE1"));
     }
 
     int countdown = 5;
     int taskID;
-    public void runDeathAnimation() {
+    private void runDeathAnimation() {
         Player player = getPlayer();
         if(player == null) return;
 
