@@ -1,7 +1,7 @@
 package de.jan.rpg.core.event;
 
 import de.jan.rpg.api.event.RPGPlayerDeathEvent;
-import de.jan.rpg.api.player.RPGPlayer;
+import de.jan.rpg.api.entity.player.RPGPlayer;
 import de.jan.rpg.core.APIImpl;
 import de.jan.rpg.core.player.CorePlayer;
 import de.jan.rpg.core.player.CorePlayerManager;
@@ -29,7 +29,7 @@ public class PlayerDeathEvent implements Listener {
 
     @EventHandler
     public void onDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
-        event.getPlayer();
+        event.setCancelled(true);
     }
 
     @EventHandler

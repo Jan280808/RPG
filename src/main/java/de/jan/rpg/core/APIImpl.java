@@ -5,7 +5,7 @@ import de.jan.rpg.api.Unsafe;
 import de.jan.rpg.api.dataBase.DataBase;
 import de.jan.rpg.api.entity.EntityManager;
 import de.jan.rpg.api.item.ItemManager;
-import de.jan.rpg.api.player.PlayerManager;
+import de.jan.rpg.api.entity.player.PlayerManager;
 import de.jan.rpg.api.translation.Translation;
 import de.jan.rpg.core.database.CoreDataBase;
 import de.jan.rpg.core.enemy.CoreEntityManager;

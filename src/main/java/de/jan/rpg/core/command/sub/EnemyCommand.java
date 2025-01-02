@@ -14,7 +14,6 @@ public class EnemyCommand implements CoreCommands {
     public void onCommand(APIImpl api, Player player, String[] args) {
         CoreEntityManager entityManager = api.getCoreEntityManager();
         entityManager.spawn(player.getLocation(), EntityType.ZOMBIE);
-        entityManager.getEntityMap().forEach((entity, coreHostile) -> player.sendMessage("registeredEntity: " + coreHostile));
     }
 
     @Override

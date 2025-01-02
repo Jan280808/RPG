@@ -1,15 +1,14 @@
 package de.jan.rpg.core.player;
 
-import de.jan.rpg.api.exception.CorePlayerNotRegisteredException;
-import de.jan.rpg.api.player.PlayerManager;
+import de.jan.rpg.api.entity.player.PlayerManager;
 import de.jan.rpg.api.translation.Language;
-import de.jan.rpg.api.player.RPGPlayer;
+import de.jan.rpg.api.entity.player.RPGPlayer;
 import de.jan.rpg.core.Core;
 import de.jan.rpg.core.database.CoreDataBase;
 import lombok.Getter;
 import lombok.Synchronized;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,11 +26,6 @@ public class CorePlayerManager implements PlayerManager {
         dataBase.createTable("corePlayer", "uuid VARCHAR(100), language VARCHAR(100), firstJoinDate VARCHAR(100), totalJoin INT, souls INT, level INT, xp INT");
         runTask();
         loadPlayerWhoHasBeenStayAfterReloadTheServer();
-    }
-
-    //deleteMe
-    private void loadPlayerWhoHasBeenStayAfterReloadTheServer() {
-        Bukkit.getOnlinePlayers().forEach(player -> getCorePlayer(player.getUniqueId()));
     }
 
     @Override
@@ -78,16 +72,14 @@ public class CorePlayerManager implements PlayerManager {
         return corePlayer;
     }
 
-    public void safeCorePlayer(Player player) {
-        UUID uuid = player.getUniqueId();
-        if(!isRegistered(uuid)) throw new CorePlayerNotRegisteredException(player.getName());
-        CorePlayer corePlayer = playerMap.get(uuid);
-        dataBase.updateDataFromUUID("corePlayer", corePlayer.getUUID(),"language, totalJoin, souls, level, xp", corePlayer.getLanguage().name(), corePlayer.getTotalJoin(), corePlayer.getSouls(), corePlayer.getLevel(), corePlayer.getXP());
+    public void safeCorePlayer(@NotNull CorePlayer corePlayer) {
+        UUID uuid = corePlayer.getUUID();
+        dataBase.updateDataFromUUID("corePlayer", uuid,"language, totalJoin, souls, level, xp", corePlayer.getLanguage().name(), corePlayer.getTotalJoin(), corePlayer.getSouls(), corePlayer.getLevel(), corePlayer.getXP());
     }
 
     //maybe too much cache?
     @Synchronized
-    public void loadAllCorePlayer() {
+    private void loadAllCorePlayer() {
         if(Core.offlineMode) return;
 
         Object result = dataBase.selectData("corePlayer","uuid, language, firstJoinDate, totalJoin, souls, level, xp");
@@ -108,6 +100,11 @@ public class CorePlayerManager implements PlayerManager {
         } else {
             Core.LOGGER.info("No data found");
         }
+    }
+
+    //deleteMe
+    private void loadPlayerWhoHasBeenStayAfterReloadTheServer() {
+        Bukkit.getOnlinePlayers().forEach(player -> getCorePlayer(player.getUniqueId()));
     }
 
     //run actionbar

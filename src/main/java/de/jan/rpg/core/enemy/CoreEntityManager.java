@@ -2,7 +2,9 @@ package de.jan.rpg.core.enemy;
 
 import de.jan.rpg.api.entity.EntityManager;
 import de.jan.rpg.api.entity.RPGLivingEntity;
+import de.jan.rpg.core.Core;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -20,28 +22,27 @@ public class CoreEntityManager implements EntityManager {
         this.entityMap = new HashMap<>();
     }
 
-    @Override
-    public RPGLivingEntity spawn(@NotNull Location location, @NotNull EntityType entityType) {
-        Entity entity = location.getWorld().spawnEntity(location, entityType);
-        CoreHostile coreHostile = new CoreHostile(1, entity);
+    public void spawnDummy(Location location) {
+        Entity entity = location.getWorld().spawnEntity(location, EntityType.ILLUSIONER);
+        CoreHostile coreHostile = new CoreHostile(entity, "Dummy", 100, 5, 10, null);
+        coreHostile.getEntity().setAI(false);
+        coreHostile.canDeath(false);
         entityMap.put(entity, coreHostile);
-        return coreHostile;
     }
 
     @Override
-    public void remove(@NotNull RPGLivingEntity livingEntity) {
-        Entity entity = livingEntity.getEntity();
-        if(entity == null) return;
-        if(!entityMap.containsKey(entity)) return;
-        entityMap.remove(entity);
-        entity.remove();
+    public RPGLivingEntity spawn(@NotNull Location location, @NotNull EntityType entityType) {
+        Entity entity = location.getWorld().spawnEntity(location, entityType);
+        CoreHostile coreHostile = new CoreHostile(entity, "Undead", 1, 5, 10, null);
+        entityMap.put(entity, coreHostile);
+        return coreHostile;
     }
 
     @Override
     public void remove(@NotNull Entity entity) {
         if(!entityMap.containsKey(entity)) return;
         entityMap.remove(entity);
-        entity.remove();
+        Bukkit.getScheduler().scheduleSyncDelayedTask(Core.instance, entity::remove, 10);
     }
 
     public CoreHostile getCoreHostile(Entity entity) {

@@ -1,9 +1,15 @@
 package de.jan.rpg.core.enemy;
 
 import de.jan.rpg.api.component.ComponentSerializer;
-import de.jan.rpg.api.entity.RPGLivingEntity;
-import de.jan.rpg.api.player.RPGPlayer;
+import de.jan.rpg.api.entity.*;
+import de.jan.rpg.api.entity.hostile.RPGHostile;
+import de.jan.rpg.api.event.RPGHostileDamageByPlayerEvent;
+import de.jan.rpg.api.event.RPGHostileDeathEvent;
+import de.jan.rpg.api.item.combat.Weapon;
+import de.jan.rpg.api.entity.player.RPGPlayer;
 import de.jan.rpg.core.Core;
+import de.jan.rpg.core.item.combat.CoreWeapon;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
@@ -11,43 +17,72 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
-public class CoreHostile implements RPGLivingEntity {
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
-    private final int level;
+@Getter
+public class CoreHostile implements RPGHostile {
+
     private final LivingEntity entity;
+    private final String displayName;
 
+    private int level;
     private int maxLife;
     private int currentLife;
-    private int armor;
+
+    private int minBaseDamage;
+    private int maxBaseDamage;
 
     private boolean isDeath = false;
     private boolean canDeath = true;
     private boolean canTakeDamage = true;
+    private Weapon weapon;
 
-    public CoreHostile(int level, Entity entity) {
-        this.level = level;
+    private RPGLivingEntity lastDamager;
+
+    public CoreHostile(Entity entity, String displayName, int level, int minBaseDamage, int maxBaseDamage, CoreWeapon coreWeapon) {
         this.entity = (LivingEntity) entity;
-        this.maxLife = 10 * level;
+        this.displayName = displayName;
+        this.level = level;
+        this.maxLife = 50 * level;
         this.currentLife = maxLife;
-        setup();
+        this.minBaseDamage = minBaseDamage;
+        this.maxBaseDamage = maxBaseDamage;
+        this.weapon = coreWeapon;
+        entity.setCustomNameVisible(true);
+        entity.customName(displayName());
+    }
+
+    @Override
+    public int getLevel() {
+        return level;
+    }
+
+    @Override
+    public void setLevel(int value) {
+        level = value;
+    }
+
+    @Override
+    public void addLevel(int value) {
+        setLevel(level + value);
     }
 
     @Override
     public Component displayName() {
-        return ComponentSerializer.deserialize("<gray>" + entity.getType().name() + " [" + level + "]" +" - <red>" + currentLife + "/" + maxLife + "❤");
+        return ComponentSerializer.deserialize("<gray>" + this.displayName + " [" + level + "]" +" - <red>" + currentLife + "/" + maxLife + "❤");
     }
 
     @Override
-    public Entity getEntity() {
-        return entity;
+    public Location getLocation() {
+        return entity.getLocation();
     }
 
     @Override
-    public int level() {
-        return level;
+    public RPGEntityType getRPGEntityType() {
+        return RPGEntityType.RPG_HOSTILE;
     }
 
     @Override
@@ -58,6 +93,112 @@ public class CoreHostile implements RPGLivingEntity {
     @Override
     public void canTakeDamage(Boolean aBoolean) {
         canTakeDamage = aBoolean;
+    }
+
+    @Override
+    public int getMaxLife() {
+        return maxLife;
+    }
+
+    @Override
+    public void setMaxLife(int value) {
+        if(value < 0) throw new IllegalArgumentException("maxLife value: " + value + " can not be negative");
+        maxLife = value;
+    }
+
+    @Override
+    public void addMaxLife(int value) {
+        setMaxLife(maxLife + value);
+    }
+
+    @Override
+    public int getCurrentLife() {
+        return currentLife;
+    }
+
+    @Override
+    public void setCurrentLife(int value) {
+        currentLife = value;
+        entity.customName(displayName());
+    }
+
+    @Override
+    public void addCurrentLife(int value) {
+        setCurrentLife(currentLife + value);
+    }
+
+    @Override
+    public int getArmor() {
+        return 0;
+    }
+
+    @Override
+    public void setArmor(int value) {
+
+    }
+
+    @Override
+    public void addArmor(int value) {
+
+    }
+
+    @Override
+    public Weapon getWeapon() {
+        return weapon;
+    }
+
+    @Override
+    public void setWeapon(Weapon weapon) {
+        this.weapon = weapon;
+    }
+
+    @Override
+    public void setMinBaseDamage(int value) {
+        if(value < 0) throw new IllegalArgumentException("minBaseDamage value: " + value + " can not be negative");
+        minBaseDamage = value;
+    }
+
+    @Override
+    public void addMinBaseDamage(int value) {
+        setMaxBaseDamage(minBaseDamage + value);
+    }
+
+    @Override
+    public void setMaxBaseDamage(int value) {
+        if(value < 0) throw new IllegalArgumentException("maxBaseDamage value: " + value + " can not be negative");
+        maxBaseDamage = value;
+    }
+
+    @Override
+    public void addMaxBaseDamage(int value) {
+        setMaxBaseDamage(maxLife + value);
+    }
+
+    @Override
+    public int getTotalDamage() {
+        Random random = new Random();
+        int damageValue = random.nextInt(maxBaseDamage - minBaseDamage + 1) + minBaseDamage;
+        if(weapon == null) return damageValue;
+        damageValue += weapon.getDamage();
+        return damageValue;
+    }
+
+    @Override
+    public void damageByPlayer(@NotNull RPGPlayer rpgPlayer, @NotNull Weapon weapon) {
+        if(!canTakeDamage) return;
+        lastDamager = rpgPlayer;
+        int damage = weapon.getDamage();
+
+        runDamageIndicator(damage, weapon.getType().getIcon(), weapon.isCriticalHit());
+
+        if(damage >= currentLife) {
+            setCurrentLife(0);
+            death(DeathReason.KILL_BY_PLAYER);
+            return;
+        }
+        setCurrentLife(currentLife-damage);
+        Bukkit.getPluginManager().callEvent(new RPGHostileDamageByPlayerEvent(this, rpgPlayer, damage));
+        setInvulnerable(10);
     }
 
     @Override
@@ -76,106 +217,31 @@ public class CoreHostile implements RPGLivingEntity {
     }
 
     @Override
-    public int getMaxLife() {
-        return maxLife;
-    }
-
-    @Override
-    public void setMaxLife(int value) {
-        maxLife = value;
-    }
-
-    @Override
-    public int getCurrentLife() {
-        return currentLife;
-    }
-
-    @Override
-    public void setCurrentLife(int value) {
-        currentLife = value;
-
-        //update displayingName
-        entity.customName(displayName());
-    }
-
-    @Override
-    public void addCurrentLife(int value) {
-        setCurrentLife(currentLife + value);
-    }
-
-    @Override
-    public void damage(int value, RPGPlayer rpgPlayer) {
-        if(!canTakeDamage) return;
-
-        runDamageIndicator(value, rpgPlayer);
-
-        if(value >= currentLife) {
-            setCurrentLife(0);
-            deathByPlayer(rpgPlayer);
-            return;
-        }
-        setCurrentLife(currentLife-value);
-    }
-
-    @Override
-    public void deathByPlayer(@NotNull RPGPlayer killer) {
-        death();
-        Location targetLocation = entity.getLocation();
-        for(int i = 0; i < 2; i++) {
-            int delay = 20 + (i * 5);
-            Bukkit.getScheduler().scheduleSyncDelayedTask(Core.instance, () -> targetLocation.getWorld().spawnParticle(Particle.VIBRATION, targetLocation.clone().add(0, 1, 0), 1, new Vibration(entity.getLocation().clone().subtract(0, 1, 0), new Vibration.Destination.EntityDestination(killer.getPlayer()), 20)), delay);
-        }
-    }
-
-    @Override
-    public void death() {
-        if(isDeath) return;
+    public void death(@NotNull DeathReason deathReason) {
+        if(!canDeath || isDeath) return;
         isDeath = true;
-
-        //kill the spigot entity
         entity.setHealth(0);
-
-        //spawn soul particle
-        Location location = entity.getLocation().add(0, 2, 0).add(new Vector(0, 0, 0));
-        location.getWorld().spawnParticle(Particle.SCULK_SOUL, location, 1, 0, 0, 0, 0);
+        Bukkit.getPluginManager().callEvent(new RPGHostileDeathEvent(this, deathReason));
     }
 
     @Override
-    public int getArmor() {
-        return armor;
+    public RPGLivingEntity getLastDamager() {
+        return lastDamager;
     }
 
-    @Override
-    public void setArmor(int value) {
-        armor = value;
-    }
-
-    @Override
-    public void addArmor(int value) {
-        armor = value;
-    }
-
-    @Override
-    public void removeArmor(int value) {
-        if(value >= armor) {
-            armor = 0;
-            return;
-        }
-        armor -= value;
-    }
-
-    private void setup() {
-        entity.setCustomNameVisible(true);
-        entity.customName(displayName());
-    }
-
-    private void runDamageIndicator(int damage, RPGPlayer damager) {
+    private void runDamageIndicator(int damage, String icon, boolean criticalHit) {
         if(!canTakeDamage) return;
         Location location = entity.getLocation();
-        TextDisplay textDisplay = (TextDisplay) location.getWorld().spawnEntity(location.clone().add(0, 1, 0), EntityType.TEXT_DISPLAY);
+        double randomXOffset = ThreadLocalRandom.current().nextDouble(-0.8, 0.8);
+        double randomYOffset = ThreadLocalRandom.current().nextDouble(-0.8, 0.8);
+        double randomZOffset = ThreadLocalRandom.current().nextDouble(-0.8, 0.8);
+        Location randomLocation = location.clone().add(randomXOffset, randomYOffset, randomZOffset);
 
-        Component text = ComponentSerializer.deserialize("<red>" + damage);
-        //if(damager != null) text = text.append(ComponentSerializer.deserialize(" <gray>[" + damager.getPlayer().getName() + "]"));
+        TextDisplay textDisplay = (TextDisplay) randomLocation.getWorld().spawnEntity(randomLocation.clone().add(0, 1, 0), EntityType.TEXT_DISPLAY);
+
+        Component text;
+        if(criticalHit) text = ComponentSerializer.deserialize("<gold><bold>" + damage + " <gray>" + icon);
+        else text = ComponentSerializer.deserialize("<red>" + damage + " <gray>" + icon);
         textDisplay.customName(text);
 
         textDisplay.setBillboard(TextDisplay.Billboard.CENTER);
@@ -186,7 +252,7 @@ public class CoreHostile implements RPGLivingEntity {
         new BukkitRunnable() {
             int ticks = 0;
             final double movementStep = 0.02;
-            final int lifetimeTicks = 20;
+            final int lifetimeTicks = 15;
 
             @Override
             public void run() {
@@ -203,5 +269,10 @@ public class CoreHostile implements RPGLivingEntity {
                 ticks++;
             }
         }.runTaskTimer(Core.instance, 0, 1);
+    }
+
+    private void setInvulnerable(int delayInTicks) {
+        canTakeDamage = false;
+        Bukkit.getScheduler().runTaskLaterAsynchronously(Core.instance, () -> canTakeDamage = true, delayInTicks);
     }
 }
