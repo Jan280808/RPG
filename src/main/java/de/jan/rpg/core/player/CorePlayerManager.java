@@ -1,16 +1,22 @@
 package de.jan.rpg.core.player;
 
+import de.jan.rpg.api.component.ComponentSerializer;
 import de.jan.rpg.api.entity.player.PlayerManager;
 import de.jan.rpg.api.translation.Language;
 import de.jan.rpg.api.entity.player.RPGPlayer;
 import de.jan.rpg.core.Core;
 import de.jan.rpg.core.database.CoreDataBase;
+import de.jan.rpg.core.item.CoreItemManager;
+import de.jan.rpg.core.item.combat.CoreArmor;
+import de.jan.rpg.core.scoreboard.Scoreboard;
 import lombok.Getter;
 import lombok.Synchronized;
 import org.bukkit.Bukkit;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -24,8 +30,8 @@ public class CorePlayerManager implements PlayerManager {
         this.dataBase = dataBase;
         this.playerMap =  new HashMap<>();
         dataBase.createTable("corePlayer", "uuid VARCHAR(100), language VARCHAR(100), firstJoinDate VARCHAR(100), totalJoin INT, souls INT, level INT, xp INT");
-        runTask();
         loadPlayerWhoHasBeenStayAfterReloadTheServer();
+        runUpdateTask();
     }
 
     @Override
@@ -77,6 +83,34 @@ public class CorePlayerManager implements PlayerManager {
         dataBase.updateDataFromUUID("corePlayer", uuid,"language, totalJoin, souls, level, xp", corePlayer.getLanguage().name(), corePlayer.getTotalJoin(), corePlayer.getSouls(), corePlayer.getLevel(), corePlayer.getXP());
     }
 
+    public void initializePlayer(CorePlayer corePlayer) {
+        Scoreboard scoreboard = new Scoreboard(corePlayer.getPlayer());
+        corePlayer.setScoreboard(scoreboard);
+        scoreboard.updateTitle(ComponentSerializer.deserialize(" <bold><gradient:blue:aqua>Fallen Empire "));
+        scoreboard.updateLine(0, ComponentSerializer.deserialize(" "));
+        scoreboard.updateLine(1, ComponentSerializer.deserialize("Date"));
+        scoreboard.updateLine(3, ComponentSerializer.deserialize(" "));
+        scoreboard.updateLine(4, ComponentSerializer.deserialize("Souls"));
+        scoreboard.updateLine(6, ComponentSerializer.deserialize(" "));
+        scoreboard.updateLine(7, ComponentSerializer.deserialize("Language"));
+        scoreboard.updateLine(9, ComponentSerializer.deserialize(" "));
+        updateScoreboard(corePlayer);
+    }
+
+    public void updateScoreboard(CorePlayer corePlayer) {
+        Scoreboard scoreboard = corePlayer.getScoreboard();
+        if(scoreboard == null) return;
+        scoreboard.updateLine(2, ComponentSerializer.deserialize(" " + currentTime()));
+        scoreboard.updateLine(5, ComponentSerializer.deserialize( " " + corePlayer.getSouls()));
+        scoreboard.updateLine(8, ComponentSerializer.deserialize(" " + corePlayer.getLanguage()));
+    }
+
+    private String currentTime() {
+        LocalTime currentTime = LocalTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        return currentTime.format(formatter);
+    }
+
     //maybe too much cache?
     @Synchronized
     private void loadAllCorePlayer() {
@@ -104,14 +138,30 @@ public class CorePlayerManager implements PlayerManager {
 
     //deleteMe
     private void loadPlayerWhoHasBeenStayAfterReloadTheServer() {
-        Bukkit.getOnlinePlayers().forEach(player -> getCorePlayer(player.getUniqueId()));
+        Bukkit.getScheduler().runTaskLater(Core.instance, () -> Bukkit.getOnlinePlayers().forEach(player -> {
+            CorePlayer corePlayer = getCorePlayer(player.getUniqueId());
+            ItemStack[] content = player.getInventory().getArmorContents();
+            Arrays.stream(content).filter(itemStack -> itemStack != null && !itemStack.getType().isAir()).forEach(itemStack -> {
+                CoreItemManager coreItemManager = Core.instance.getCoreAPI().getCoreItemManager();
+                CoreArmor armor = coreItemManager.getCoreArmor(itemStack);
+                if(armor != null) {
+                    corePlayer.addArmor(armor.getArmorValue());
+                    corePlayer.addMaxLife(armor.getExtraLife());
+                }
+                initializePlayer(corePlayer);
+            });
+        }), 20);
     }
 
     //run actionbar
-    private void runTask() {
+    private void runUpdateTask() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(Core.instance, () -> {
             if(playerMap.isEmpty()) return;
-            playerMap.values().stream().filter(corePlayer -> corePlayer.getPlayer() != null && corePlayer.getPlayer().isOnline()).forEach(CorePlayer::sendActionbar);
+            playerMap.values().stream().filter(corePlayer -> corePlayer.getPlayer() != null && corePlayer.getPlayer().isOnline()).forEach(corePlayer -> {
+                corePlayer.sendActionbar();
+                corePlayer.regeneration();
+                updateScoreboard(corePlayer);
+            });
         }, 0, 20);
     }
 }
