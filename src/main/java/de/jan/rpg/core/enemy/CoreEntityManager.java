@@ -3,6 +3,7 @@ package de.jan.rpg.core.enemy;
 import de.jan.rpg.api.entity.EntityManager;
 import de.jan.rpg.api.entity.RPGLivingEntity;
 import de.jan.rpg.core.Core;
+import de.jan.rpg.core.item.combat.status.*;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,7 +25,7 @@ public class CoreEntityManager implements EntityManager {
 
     public void spawnDummy(Location location) {
         Entity entity = location.getWorld().spawnEntity(location, EntityType.ILLUSIONER);
-        CoreHostile coreHostile = new CoreHostile(entity, "Dummy", 100, 5, 10, null);
+        CoreHostile coreHostile = new CoreHostile(entity, "Dummy", 100, 5, 10, null, 1, 1);
         coreHostile.getEntity().setAI(false);
         coreHostile.canDeath(false);
         entityMap.put(entity, coreHostile);
@@ -33,7 +34,12 @@ public class CoreEntityManager implements EntityManager {
     @Override
     public RPGLivingEntity spawn(@NotNull Location location, @NotNull EntityType entityType) {
         Entity entity = location.getWorld().spawnEntity(location, entityType);
-        CoreHostile coreHostile = new CoreHostile(entity, "Undead", 1, 5, 10, null);
+        CoreHostile coreHostile = new CoreHostile(entity, "Undead", 10, 5, 10, null, 1, 1);
+        coreHostile.addStatus(new FireStatus(coreHostile, 50, 0, 3));
+        coreHostile.addStatus(new FrostStatus(coreHostile, 25, 0, 3));
+        coreHostile.addStatus(new PosionStatus(coreHostile, 50, 0, 3));
+        coreHostile.addStatus(new BleedingStatus(coreHostile, 50, 0, 3));
+        coreHostile.addStatus(new HolyStatus(coreHostile, 100, 0, 3));
         entityMap.put(entity, coreHostile);
         return coreHostile;
     }
