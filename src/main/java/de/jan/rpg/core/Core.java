@@ -49,6 +49,8 @@ public final class Core extends JavaPlugin {
         pluginManager.registerEvents(new PlayerConnectionEvent(coreAPI), this);
         pluginManager.registerEvents(new PlayerDamageEvent(coreAPI), this);
         pluginManager.registerEvents(new PlayerDeathEvent(coreAPI), this);
+        pluginManager.registerEvents(new PlayerChanceArmorEvent(coreAPI), this);
+        pluginManager.registerEvents(new PlayerMovementEvent(coreAPI), this);
         pluginManager.registerEvents(new HostileDamageEvent(coreAPI), this);
         pluginManager.registerEvents(new CanceledEvent(), this);
     }
