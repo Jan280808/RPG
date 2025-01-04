@@ -1,14 +1,16 @@
 package de.jan.rpg.core.item.combat;
 
 import de.jan.rpg.api.builder.ItemBuilder;
+import de.jan.rpg.api.event.RPGWeaponLevelUpEvent;
 import de.jan.rpg.api.item.ItemRarity;
 import de.jan.rpg.api.item.ItemType;
-import de.jan.rpg.api.item.combat.DamageType;
+import de.jan.rpg.api.item.combat.Status;
 import de.jan.rpg.api.item.combat.Weapon;
 import de.jan.rpg.api.item.ItemData;
 import de.jan.rpg.api.item.combat.WeaponType;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -22,7 +24,7 @@ public class CoreWeapon implements Weapon {
     private final Material material;
     private final ItemType itemType;
     private final WeaponType weaponType;
-    private final DamageType damageType;
+    private final Status.Type statusType;
     private final ItemRarity itemRarity;
 
     private final int minDamage;
@@ -30,17 +32,22 @@ public class CoreWeapon implements Weapon {
     private final double criticalChance;
     private boolean criticalHit = false;
 
-    public CoreWeapon(int id, Component displayName, Material material, ItemType itemType, WeaponType weaponType, DamageType damageType, ItemRarity itemRarity, int minDamage, int maxDamage, double criticalChance) {
+    private int level;
+    private int xp;
+
+    public CoreWeapon(int id, Component displayName, Material material, WeaponType weaponType, Status.Type statusType, ItemRarity itemRarity, int minDamage, int maxDamage, double criticalChance, int level, int xp) {
         this.id = id;
         this.displayName = displayName;
         this.material = material;
-        this.itemType = itemType;
+        this.itemType = ItemType.WEAPON;
         this.weaponType = weaponType;
-        this.damageType = damageType;
+        this.statusType = statusType;
         this.itemRarity = itemRarity;
         this.minDamage = minDamage;
         this.maxDamage = maxDamage;
         this.criticalChance = criticalChance;
+        this.level = level;
+        this.xp = xp;
     }
 
     @Override
@@ -67,13 +74,33 @@ public class CoreWeapon implements Weapon {
     }
 
     @Override
-    public DamageType getDamageType() {
-        return damageType;
+    public Status.Type getStatusType() {
+        return statusType;
     }
 
     @Override
     public boolean isCriticalHit() {
         return criticalHit;
+    }
+
+    @Override
+    public int getLevel() {
+        return level;
+    }
+
+    public void levelUP() {
+        level += 1;
+        Bukkit.getPluginManager().callEvent(new RPGWeaponLevelUpEvent(this, getLevel()));
+    }
+
+    @Override
+    public int getXP() {
+        return xp;
+    }
+
+    @Override
+    public void addXP(int value) {
+        xp = xp + value;
     }
 
     @Override
@@ -103,9 +130,9 @@ public class CoreWeapon implements Weapon {
                 .setData(ItemData.MIN_DAMAGE, "" + minDamage)
                 .setData(ItemData.MAX_DAMAGE, "" + maxDamage)
                 .setData(ItemData.WEAPON_TYPE, weaponType.toString())
-                .setData(ItemData.DAMAGE_TYPE, damageType.toString())
+                .setData(ItemData.STATUS_DAMAGE_TYPE, statusType.toString())
                 .setData(ItemData.RARITY, itemRarity.toString())
-                .setData(ItemData.CRITICAL, "" + criticalChance).setLore("id: " + id, "minDamage: " + minDamage, "maxDamage: " + maxDamage, "criticalChance: " + criticalChance, "WeaponType: " + weaponType, "DamageType: " + damageType ,"itemRarity: " + itemRarity)
+                .setData(ItemData.CRITICAL, "" + criticalChance).setLore("id: " + id, "minDamage: " + minDamage, "maxDamage: " + maxDamage, "criticalChance: " + criticalChance, "WeaponType: " + weaponType, "StatusDamageType: " + statusType.getIcon() ,"itemRarity: " + itemRarity)
                 .build();
     }
 }

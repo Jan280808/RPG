@@ -48,7 +48,6 @@ public class HostileDamageEvent implements Listener {
 
         Location location = hostile.getLocation().add(0, 2, 0).add(new Vector(0, 0, 0));
         location.getWorld().spawnParticle(Particle.SCULK_SOUL, location, 1, 0, 0, 0, 0);
-        location.getWorld().spawnParticle(Particle.TRIAL_OMEN, location, 1, 0, 0, 0, 0);
 
         for(int i = 0; i < 2; i++) {
             int delay = 20 + (i * 5);
