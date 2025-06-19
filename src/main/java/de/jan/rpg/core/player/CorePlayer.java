@@ -8,11 +8,11 @@ import de.jan.rpg.api.event.RPGPlayerDamageEvent;
 import de.jan.rpg.api.event.RPGPlayerDeathEvent;
 import de.jan.rpg.api.exception.OfflineException;
 import de.jan.rpg.api.exception.ValueIsNegativeException;
+import de.jan.rpg.api.item.combat.Weapon;
 import de.jan.rpg.api.translation.Language;
 import de.jan.rpg.api.entity.player.RPGPlayer;
 import de.jan.rpg.core.Core;
 import de.jan.rpg.core.enemy.CoreHostile;
-import de.jan.rpg.core.item.combat.CoreWeapon;
 import de.jan.rpg.core.scoreboard.Scoreboard;
 import lombok.Getter;
 import lombok.Setter;
@@ -269,7 +269,7 @@ public class CorePlayer implements RPGPlayer {
     }
 
     public void regeneration() {
-        if (!canRegenerate) {
+        if(!canRegenerate) {
             long time = System.currentTimeMillis() - lasHitTime;
             if(time < noHitTime * 1000L) return;
             canRegenerate = true;
@@ -393,10 +393,10 @@ public class CorePlayer implements RPGPlayer {
         Bukkit.getPluginManager().callEvent(new RPGPlayerDamageByHostileEvent(this, damager, damage));
     }
 
-    public void damageByRPGPlayer(@NotNull CorePlayer damager, @NotNull CoreWeapon weapon) {
+    public void damageByRPGPlayer(@NotNull CorePlayer damager, @NotNull Weapon weapon) {
         if(!canTakeDamage) return;
         lastDamager = damager;
-        int damage = weapon.getDamage();
+        int damage = weapon.getRandomDamage();
         damage(damage, DamageReason.PLAYER_HIT);
         Bukkit.getPluginManager().callEvent(new RPGPlayerDamageByPlayerEvent(this, damager, damage));
     }

@@ -42,7 +42,7 @@ public final class Core extends JavaPlugin {
         coreDataBase.disconnect();
 
         //remove all coreHostileEntities
-        coreAPI.getCoreEntityManager().getEntityMap().forEach((entity, coreHostile) -> coreHostile.getEntity().remove());
+        coreAPI.getCoreEntityManager().getEntityMap().values().forEach(coreHostile -> coreHostile.getEntity().remove());
     }
 
     private void registerListener(PluginManager pluginManager) {

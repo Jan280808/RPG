@@ -168,7 +168,7 @@ public class CoreDataBase implements DataBase {
             isConnected = true;
         } catch (SQLException exception) {
             isConnected = false;
-            Core.LOGGER.error("connection has failed", exception);
+            activateOfflineMode();
         }
     }
 
@@ -189,7 +189,7 @@ public class CoreDataBase implements DataBase {
             File file = new File(filePath);
             if(!file.exists()) {
                 JSONObject defaultJson = new JSONObject();
-                defaultJson.put("onlineMode", false);
+                defaultJson.put("offlineMode", false);
                 JSONObject login = new JSONObject();
                 login.put("host", "null");
                 login.put("port", 25565);
@@ -209,11 +209,10 @@ public class CoreDataBase implements DataBase {
 
             String content = new String(Files.readAllBytes(Paths.get(filePath)));
             JSONObject jsonObject = new JSONObject(content);
-            boolean onlineMode = jsonObject.getBoolean("onlineMode");
+            boolean offlineMode = jsonObject.getBoolean("offlineMode");
 
-            if(!onlineMode) {
-                Core.LOGGER.info("activate onlineMode, no interaction with dataBase possible");
-                Core.offlineMode = true;
+            if(offlineMode) {
+                activateOfflineMode();
                 return;
             }
 
@@ -228,5 +227,11 @@ public class CoreDataBase implements DataBase {
         } catch (Exception exception) {
             Core.LOGGER.error("could not load database.json", exception);
         }
+    }
+
+    private void activateOfflineMode() {
+        if(Core.offlineMode) return;
+        Core.LOGGER.warn("OfflineMode is activated, no interaction with dataBase possible");
+        Core.offlineMode = true;
     }
 }

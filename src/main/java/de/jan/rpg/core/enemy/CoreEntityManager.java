@@ -34,7 +34,7 @@ public class CoreEntityManager implements EntityManager {
     @Override
     public RPGLivingEntity spawn(@NotNull Location location, @NotNull EntityType entityType) {
         Entity entity = location.getWorld().spawnEntity(location, entityType);
-        CoreHostile coreHostile = new CoreHostile(entity, "Undead", 10, 5, 10, null, 1, 1);
+        CoreHostile coreHostile = new CoreHostile(entity, "Undead", 1, 5, 10, null, 1, 20);
         coreHostile.addStatus(new FireStatus(coreHostile, 50, 0, 3));
         coreHostile.addStatus(new FrostStatus(coreHostile, 25, 0, 3));
         coreHostile.addStatus(new PosionStatus(coreHostile, 50, 0, 3));

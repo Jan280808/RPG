@@ -39,7 +39,23 @@
       </plugin>
     </plugins>
   </build>
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+    <repository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/groups/public/</url>
+    </repository>
+  </repositories>
   <dependencies>
+    <dependency>
+      <groupId>com.github.koca2000</groupId>
+      <artifactId>NoteBlockAPI</artifactId>
+      <version>1.6.2</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>io.papermc.paper</groupId>
       <artifactId>paper-api</artifactId>

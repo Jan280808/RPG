@@ -1,19 +1,9 @@
 package de.jan.rpg.core.event;
 
-import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
-import de.jan.rpg.api.entity.player.RPGPlayer;
-import de.jan.rpg.api.event.RPGPlayerChanceArmorEvent;
-import de.jan.rpg.api.item.combat.Armor;
 import de.jan.rpg.core.APIImpl;
 import de.jan.rpg.core.item.CoreItemManager;
-import de.jan.rpg.core.item.combat.CoreArmor;
-import de.jan.rpg.core.player.CorePlayer;
 import de.jan.rpg.core.player.CorePlayerManager;
-import org.bukkit.Bukkit;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-
-import java.util.UUID;
 
 public class PlayerChanceArmorEvent implements Listener {
 
@@ -25,6 +15,7 @@ public class PlayerChanceArmorEvent implements Listener {
         this.coreItemManager = api.getCoreItemManager();
     }
 
+    /*
     @EventHandler
     public void onChance(PlayerArmorChangeEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
@@ -51,4 +42,6 @@ public class PlayerChanceArmorEvent implements Listener {
             rpgPlayer.addMaxLife(newArmor.getExtraLife());
         }
     }
+
+     */
 }

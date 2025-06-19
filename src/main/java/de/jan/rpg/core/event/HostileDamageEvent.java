@@ -3,23 +3,17 @@ package de.jan.rpg.core.event;
 import de.jan.rpg.api.entity.hostile.RPGHostile;
 import de.jan.rpg.api.entity.player.RPGPlayer;
 import de.jan.rpg.api.event.RPGHostileDeathEvent;
-import de.jan.rpg.api.item.combat.WeaponType;
+import de.jan.rpg.api.item.combat.Weapon;
+import de.jan.rpg.api.item.combat.data.WeaponType;
 import de.jan.rpg.core.APIImpl;
 import de.jan.rpg.core.Core;
 import de.jan.rpg.core.enemy.CoreEntityManager;
 import de.jan.rpg.core.enemy.CoreHostile;
-import de.jan.rpg.core.item.CoreItemManager;
-import de.jan.rpg.core.item.combat.CoreWeapon;
+import de.jan.rpg.core.item.combat.CoreCombatManager;
 import de.jan.rpg.core.player.CorePlayer;
 import de.jan.rpg.core.player.CorePlayerManager;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.Vibration;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.*;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -31,12 +25,12 @@ public class HostileDamageEvent implements Listener {
 
     private final CorePlayerManager corePlayerManager;
     private final CoreEntityManager coreEntityManager;
-    private final CoreItemManager coreItemManager;
+    private final CoreCombatManager coreCombatManager;
 
     public HostileDamageEvent(APIImpl api) {
         this.coreEntityManager = api.getCoreEntityManager();
         this.corePlayerManager = api.getCorePlayerManager();
-        this.coreItemManager = api.getCoreItemManager();
+        this.coreCombatManager = api.getCoreItemManager().getCoreCombatManager();
     }
 
     @EventHandler
@@ -70,16 +64,23 @@ public class HostileDamageEvent implements Listener {
             return;
         }
 
-        CoreWeapon weapon = coreItemManager.getCoreWeapon(itemStack);
+        Weapon weapon = coreCombatManager.getWeapon(itemStack);
         if(weapon == null) {
             event.setCancelled(true);
             return;
         }
 
-        if(!weapon.getType().equals(WeaponType.MELEE)) {
+        if(!weapon.getWeaponType().equals(WeaponType.MELEE)) {
             event.setCancelled(true);
             return;
         }
+
+        float cooldown = player.getAttackCooldown();
+        if(cooldown < 0.9f) {
+            event.setCancelled(true);
+            return;
+        }
+
         target.damageByPlayer(damager, weapon);
     }
 
@@ -98,12 +99,12 @@ public class HostileDamageEvent implements Listener {
                 return;
             }
 
-            CoreWeapon weapon = coreItemManager.getCoreWeapon(itemStack);
+            Weapon weapon = coreCombatManager.getWeapon(itemStack);
             if(weapon == null) {
                 event.setCancelled(true);
                 return;
             }
-            if(!weapon.getType().equals(WeaponType.RANGE)) {
+            if(!weapon.getWeaponType().equals(WeaponType.RANGE)) {
                 event.setCancelled(true);
                 return;
             }

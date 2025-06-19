@@ -10,6 +10,7 @@ import de.jan.rpg.core.enemy.CoreHostile;
 import de.jan.rpg.core.item.CoreItemManager;
 import de.jan.rpg.core.player.CorePlayer;
 import de.jan.rpg.core.player.CorePlayerManager;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
@@ -18,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.util.RayTraceResult;
 
@@ -34,6 +36,7 @@ public class PlayerConnectionEvent implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+
         CorePlayer corePlayer = playerManager.getCorePlayer(player.getUniqueId());
         corePlayer.addTotalJoin();
         Bukkit.getPluginManager().callEvent(new RPGPlayerJoinEvent(corePlayer));
@@ -45,6 +48,9 @@ public class PlayerConnectionEvent implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
+
+        if(Core.offlineMode) return;
+
         CorePlayer corePlayer = playerManager.getCorePlayer(player.getUniqueId());
         Bukkit.getPluginManager().callEvent(new RPGPlayerQuitEvent(corePlayer));
         playerManager.safeCorePlayer(corePlayer);

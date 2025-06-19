@@ -7,7 +7,6 @@ import de.jan.rpg.api.entity.player.RPGPlayer;
 import de.jan.rpg.core.Core;
 import de.jan.rpg.core.database.CoreDataBase;
 import de.jan.rpg.core.item.CoreItemManager;
-import de.jan.rpg.core.item.combat.CoreArmor;
 import de.jan.rpg.core.scoreboard.Scoreboard;
 import lombok.Getter;
 import lombok.Synchronized;
@@ -143,11 +142,6 @@ public class CorePlayerManager implements PlayerManager {
             ItemStack[] content = player.getInventory().getArmorContents();
             Arrays.stream(content).filter(itemStack -> itemStack != null && !itemStack.getType().isAir()).forEach(itemStack -> {
                 CoreItemManager coreItemManager = Core.instance.getCoreAPI().getCoreItemManager();
-                CoreArmor armor = coreItemManager.getCoreArmor(itemStack);
-                if(armor != null) {
-                    corePlayer.addArmor(armor.getArmorValue());
-                    corePlayer.addMaxLife(armor.getExtraLife());
-                }
                 initializePlayer(corePlayer);
             });
         }), 20);

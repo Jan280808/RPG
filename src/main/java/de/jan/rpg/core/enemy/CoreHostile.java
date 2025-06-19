@@ -5,11 +5,11 @@ import de.jan.rpg.api.entity.*;
 import de.jan.rpg.api.entity.hostile.RPGHostile;
 import de.jan.rpg.api.event.RPGHostileDamageByPlayerEvent;
 import de.jan.rpg.api.event.RPGHostileDeathEvent;
+import de.jan.rpg.api.exception.CoreHostileLivingEntityException;
 import de.jan.rpg.api.item.combat.Status;
-import de.jan.rpg.api.item.combat.Weapon;
 import de.jan.rpg.api.entity.player.RPGPlayer;
+import de.jan.rpg.api.item.combat.Weapon;
 import de.jan.rpg.core.Core;
-import de.jan.rpg.core.item.combat.CoreWeapon;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
@@ -47,17 +47,16 @@ public class CoreHostile implements RPGHostile {
     private final Map<Status.Type, Status > statusMap;
 
     //loot
-    private List<ItemStack> lootTable;
     private int souls;
     private int xp;
 
-    public CoreHostile(Entity entity, String displayName, int level, int minBaseDamage, int maxBaseDamage, CoreWeapon coreWeapon, int souls, int xp) {
+    public CoreHostile(Entity entity, String displayName, int level, int minBaseDamage, int maxBaseDamage, Weapon coreWeapon, int souls, int xp) {
         this.entity = (LivingEntity) entity;
         this.displayName = displayName;
         this.level = level;
 
         //combat
-        this.maxLife = 50 * level;
+        this.maxLife = 100 * level;
         this.currentLife = maxLife;
         this.minBaseDamage = minBaseDamage;
         this.maxBaseDamage = maxBaseDamage;
@@ -65,7 +64,6 @@ public class CoreHostile implements RPGHostile {
         this.statusMap = new HashMap<>();
 
         //loot
-        this.lootTable = new ArrayList<>();
         this.souls = souls;
         this.xp = xp;
 
@@ -215,6 +213,12 @@ public class CoreHostile implements RPGHostile {
         return statusMap.get(statusType);
     }
 
+    @Override
+    public void remove() {
+        if(getEntity() == null) throw new CoreHostileLivingEntityException(this);
+        getEntity().remove();
+    }
+
     public void addStatus(Status status) {
         this.statusMap.put(status.getType(), status);
     }
@@ -256,7 +260,7 @@ public class CoreHostile implements RPGHostile {
         Random random = new Random();
         int damageValue = random.nextInt(maxBaseDamage - minBaseDamage + 1) + minBaseDamage;
         if(weapon == null) return damageValue;
-        damageValue += weapon.getDamage();
+        damageValue += weapon.getRandomDamage();
         return damageValue;
     }
 
@@ -264,9 +268,9 @@ public class CoreHostile implements RPGHostile {
     public void damageByPlayer(@NotNull RPGPlayer rpgPlayer, @NotNull Weapon weapon) {
         if(!canTakeDamage) return;
         lastDamager = rpgPlayer;
-        int damage = weapon.getDamage();
+        int damage = weapon.getRandomDamage();
 
-        runDamageIndicator(damage, weapon.getType().getIcon(), weapon.isCriticalHit());
+        runDamageIndicator(damage, weapon.getWeaponType().getIcon(), false);
 
         if(damage >= currentLife) {
             setCurrentLife(0);
@@ -376,12 +380,12 @@ public class CoreHostile implements RPGHostile {
 
     @Override
     public void setSouls(int value) {
-
+        souls = value;
     }
 
     @Override
     public int getAllSouls() {
-        return 0;
+        return armor;
     }
 
     @Override
@@ -391,12 +395,12 @@ public class CoreHostile implements RPGHostile {
 
     @Override
     public void setXP(int value) {
-
+        xp = value;
     }
 
     @Override
     public int getAllXP() {
-        return 0;
+        return xp;
     }
 
     @Override

@@ -1,10 +1,10 @@
 package de.jan.rpg.core.event;
 
+import de.jan.rpg.api.item.combat.Weapon;
 import de.jan.rpg.core.APIImpl;
 import de.jan.rpg.core.enemy.CoreEntityManager;
 import de.jan.rpg.core.enemy.CoreHostile;
 import de.jan.rpg.core.item.CoreItemManager;
-import de.jan.rpg.core.item.combat.CoreWeapon;
 import de.jan.rpg.core.player.CorePlayer;
 import de.jan.rpg.core.player.CorePlayerManager;
 import org.bukkit.entity.EntityType;
@@ -59,9 +59,10 @@ public class PlayerDamageEvent implements Listener {
         ItemStack itemStack = targetPlayer.getInventory().getItemInMainHand();
         if(itemStack.getType().isAir()) return;
 
-        CoreWeapon weapon = coreItemManager.getCoreWeapon(itemStack);
+        Weapon weapon = coreItemManager.getCoreCombatManager().getWeapon(itemStack);
         if(weapon == null) return;
 
         target.damageByRPGPlayer(damager, weapon);
     }
+
 }
